@@ -21,7 +21,7 @@ import SavedView from "./components/SavedView";
 import Icon from "./components/Icon";
 
 const PAGE_SIZE = 12;
-const API_URL = "http://localhost:5000/api/resources";
+const API_URL = "/api/resources";
 
 function Logo() {
   return (

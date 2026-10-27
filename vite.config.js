@@ -5,4 +5,8 @@ export default defineConfig({
   plugins: [react()],
   base: "./",
   test: { environment: "node" },
+  server: {
+    host: true,
+    proxy: { "/api": "http://localhost:5000" },
+  },
 });

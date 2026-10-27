@@ -16,8 +16,8 @@ export default function LoginForm({ onClose }) {
     setMessage("");
 
     const url = isRegister
-      ? "http://localhost:5000/api/register"
-      : "http://localhost:5000/api/login";
+      ? "/api/register"
+      : "/api/login";
 
     const body = isRegister
       ? { name, email, password }

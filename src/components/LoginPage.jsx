@@ -72,8 +72,8 @@ export default function LoginPage() {
 
       const url =
         mode === "register"
-          ? "http://localhost:5000/api/register"
-          : "http://localhost:5000/api/login";
+          ? "/api/register"
+          : "/api/login";
 
       const body =
         mode === "register"
