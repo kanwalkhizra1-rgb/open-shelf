@@ -3,7 +3,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { resources } from "./data/resources.js";
-import { users } from "./data/users.js";
+import { users, saveUsers } from "./data/users.js";
 
 const app = express();
 const PORT = 5000;
@@ -46,6 +46,7 @@ app.post("/api/register", async (req, res) => {
   };
 
   users.push(newUser);
+  saveUsers(); // persist to users.json so the account survives restarts
 
   res.status(201).json({ message: "User registered successfully" });
 });
