@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { resources } from "./Data/resources.js";
-import { users, saveUsers } from "./Data/users.js";
+import { resources } from "./data/resources.js";
+import { users, saveUsers } from "./data/users.js";
 
 const app = express();
 const PORT = 5000;
