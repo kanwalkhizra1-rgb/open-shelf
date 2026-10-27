@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "server": "nodemon server/index.js",
+    "server": "nodemon Server/index.js",
     "frontend": "vite"
   },
   "dependencies": {
