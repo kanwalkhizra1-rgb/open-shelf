@@ -1,46 +1,80 @@
 # Open Shelf: Online Learning Resource Catalogue
 
-Front-end artefact which supports **UN SDG 4: Quality Education** by making free learning resources easier to find.
+Open Shelf helps people find free and freemium learning resources. It supports **UN SDG 4: Quality Education**.
 
-## What it does
-- Search across title, topic tags, provider and description (every word must match; title matches rank highest)
-- Filter by subject, level, format, cost and time commitment; options within a group combine with OR, groups combine with AND
-- Live facet counts that show how many results each option would give
-- Removable filter chips, sort options, "show more" paging
-- Details dialog for each resource
-- "My list": save resources, set progress (To do / In progress / Done), see a progress bar; stored in localStorage
-- Search and filters are kept in the URL, so a search can be bookmarked or shared
+The project started as a front-end catalogue and now includes authentication, roles, and a small backend.
+
+## Features
+
+### For everyone (after login)
+- Search across title, topic tags, provider and description
+- Filter by subject, level, format, cost and time commitment
+- Live facet counts
+- Removable filter chips, sorting, and “show more” paging
+- Resource details dialog
+- **My list**: save resources, set progress (To do / In progress / Done), stored in the browser
+- Search and filters are kept in the URL (shareable / bookmarkable)
+
+### Authentication
+- Full login page (dark theme)
+- Register new account
+- Forgot password UI (demo flow)
+- Session kept in `localStorage`
+
+### Roles
+| Role   | Access |
+|--------|--------|
+| **Admin** | Browse, My List, **Add Resource**, **Delete Resource** |
+| **User**  | Browse, search, filter, My List only |
+
+- Admin login: `admin@openshelf.com` / `admin123`
+- Anyone can register; new accounts are normal users
 
 ## Tech
-React 18, Vite, plain CSS (design tokens in `:root`), Vitest. No back end: the catalogue is a static data file (`src/data/resources.js`).
 
-## Run it
+- **Frontend:** React 18, Vite, plain CSS
+- **Backend:** Express, JWT auth, bcrypt
+- **Tooling:** Vitest, concurrently, nodemon
+
+## Run the project
+
+One command starts both frontend and backend:
+
 ```bash
 npm install
-npm run dev      # development server
-npm test         # unit tests for the search/filter logic
-npm run build    # production build in dist/
-```
+npm run dev
 
-## Structure
-```
+Frontend: http://localhost:5173
+Backend:  http://localhost:5000
+
+Other scripts:
+npm run server     # backend only
+npm run frontend   # frontend only
+npm test           # unit tests for search/filter logic
+npm run build      # production build
+
+Project structure
 src/
-  data/resources.js          catalogue data and option lists
-  utils/filterResources.js   pure search, filter, sort, facet-count and URL functions (unit tested)
-  hooks/                     useUrlFilters, useDebouncedValue
-  context/SavedContext.jsx   useReducer store for "My list", persisted to localStorage
-  components/                SearchBar, FilterPanel, ActiveFilters, ResourceCard, ResourceDialog, SavedView, ...
-  App.jsx                    page composition and state wiring
-```
+  components/          LoginPage, ResourceCard, FilterPanel, ...
+  context/             AuthContext, SavedContext
+  data/resources.js    Catalogue data (also mirrored on server)
+  hooks/               useUrlFilters, useDebouncedValue
+  utils/               filterResources (unit tested)
+  App.jsx              Auth gate + dashboard
+server/
+  index.js             Express API (auth, resources)
+  data/                users.js, resources.js
 
-## Accessibility decisions
-- Skip link, landmarks and a logical heading order
-- Native `<dialog>` for details (focus trap, Escape to close, focus returns to the opener)
-- Result count announced through a polite live region; save/remove actions announced too
-- Colour is never the only signal: subject and level are always written out
-- Visible keyboard focus, 44px touch targets, `prefers-reduced-motion` respected
+  Accessibility
+  Skip link, landmarks, logical heading order
+Native <dialog> for details
+Live regions for result count and save actions
+Colour is never the only signal
+Visible focus, large touch targets, prefers-reduced-motion respected
 
-## Limitations
-- Level, time and cost values are approximate and hand-curated. Check each provider for current details.
-- No back end or accounts, so saved lists are per browser.
-- Ratings and user reviews are out of scope for a front-end-only build.
+Current limitations
+Users and resources are stored in memory (reset when the server restarts)
+Saved lists are per browser (localStorage)
+Forgot-password is UI-only (no real email yet)
+Level, time and cost values are approximate
+
