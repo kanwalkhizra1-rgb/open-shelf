@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Admin",
+    "email": "admin@openshelf.com",
+    "password": "admin123",
+    "role": "admin"
+  },
+  {
+    "id": 2,
+    "name": "testing",
+    "email": "testing@gmail.com",
+    "password": "$2b$10$o3h14QOGvXLPsN9KxPH15eEn.xknj7DGUrOGO/1/WppGwV2hwuu26",
+    "role": "user"
+  }
+]
