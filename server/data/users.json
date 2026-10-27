@@ -12,5 +12,12 @@
     "email": "testing@gmail.com",
     "password": "$2b$10$o3h14QOGvXLPsN9KxPH15eEn.xknj7DGUrOGO/1/WppGwV2hwuu26",
     "role": "user"
+  },
+  {
+    "id": 3,
+    "name": "aaaaaaa",
+    "email": "aaa@gmail.com",
+    "password": "$2b$10$nezasTFAAmFuG59AvTP1WOE9BwCehCVgdjIn.2.aWjeyWjOw5Gmb6",
+    "role": "user"
   }
 ]
