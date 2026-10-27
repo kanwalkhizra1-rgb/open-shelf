@@ -1,5 +1,7 @@
+import { useAuth } from "./context/AuthContext";
+import LoginPage from "./components/LoginPage";
+import AddResourceForm from "./components/AddResourceForm";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { resources } from "./data/resources";
 import { useUrlFilters } from "./hooks/useUrlFilters";
 import { useDebouncedValue } from "./hooks/useDebouncedValue";
 import { useSaved } from "./context/SavedContext";
@@ -19,6 +21,7 @@ import SavedView from "./components/SavedView";
 import Icon from "./components/Icon";
 
 const PAGE_SIZE = 12;
+const API_URL = "http://localhost:5000/api/resources";
 
 function Logo() {
   return (
@@ -31,8 +34,60 @@ function Logo() {
 }
 
 export default function App() {
+  const { user, logout } = useAuth();
+
+  // Show dedicated login page until the user is authenticated
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  return <Dashboard user={user} logout={logout} />;
+}
+
+function Dashboard({ user, logout }) {
   const { filters, setQuery, setSort, toggleOption, clearFacets, clearAll } = useUrlFilters();
   const { saved, toggle, message } = useSaved();
+    const { token } = useAuth();
+  const isAdmin = user?.role === "admin";
+
+  const [resources, setResources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  useEffect(() => {
+    fetch(API_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch resources");
+        return res.json();
+      })
+      .then((data) => {
+        setResources(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+    const handleDelete = async (resource) => {
+    try {
+      const res = await fetch(`${API_URL}/${resource.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Failed to delete resource");
+        return;
+      }
+      setResources((prev) => prev.filter((r) => String(r.id) !== String(resource.id)));
+    } catch {
+      alert("Server error while deleting resource");
+    }
+  };
 
   // The search box updates instantly; the filters update after a short pause.
   const [text, setText] = useState(filters.q);
@@ -48,12 +103,12 @@ export default function App() {
   const browseHeadingRef = useRef(null);
   const firstRender = useRef(true);
 
-  const results = useMemo(() => filterResources(resources, filters), [filters]);
+  const results = useMemo(() => filterResources(resources, filters), [resources, filters]);
   const counts = useMemo(() => {
     const out = {};
     for (const key of Object.keys(FACET_FIELDS)) out[key] = getFacetCounts(resources, filters, key);
     return out;
-  }, [filters]);
+  }, [resources, filters]);
 
   const activeCount = countActiveFilters(filters);
   const savedCount = Object.keys(saved).length;
@@ -121,8 +176,20 @@ export default function App() {
                   </span>
                 </button>
               </li>
-            </ul>
-          </nav>
+                  {isAdmin && (
+      <li>
+        <button type="button" className="tab" onClick={() => setShowAdd(true)}>
+          + Add Resource
+        </button>
+      </li>
+    )}
+    <li>
+      <button type="button" className="tab" onClick={logout}>
+        Logout ({user.name}{isAdmin ? " · Admin" : ""})
+      </button>
+    </li>
+  </ul>
+</nav>
         </div>
         {view === "browse" && (
           <div className="wrap">
@@ -132,96 +199,113 @@ export default function App() {
       </header>
 
       <main id="main" className="wrap">
-        {view === "saved" ? (
-          <SavedView
-            resources={resources}
-            onOpen={setSelected}
-            onBrowse={() => setView("browse")}
-            headingRef={savedHeadingRef}
-          />
-        ) : (
-          <div className="layout">
-            <aside className="sidebar">
-              <button
-                type="button"
-                className="btn btn-quiet filters-toggle"
-                aria-expanded={filtersOpen}
-                aria-controls="filter-panel"
-                onClick={() => setFiltersOpen((o) => !o)}
-              >
-                <Icon name="filter" size={16} />
-                Filters{activeCount > 0 ? ` (${activeCount})` : ""}
-              </button>
-              <div id="filter-panel" className={filtersOpen ? "filter-wrap open" : "filter-wrap"}>
-                <FilterPanel
-                  filters={filters}
-                  counts={counts}
-                  onToggle={toggleOption}
-                  onClear={clearFacets}
-                  activeCount={activeCount}
-                />
-              </div>
-            </aside>
+        {loading && <p>Loading resources...</p>}
 
-            <section aria-labelledby="results-heading" className="results">
-              <div className="results-bar">
-                <h2 id="results-heading" tabIndex={-1} ref={browseHeadingRef}>
-                  Resources
-                </h2>
-                <p role="status" className="result-count">
-                  {results.length} {results.length === 1 ? "resource matches" : "resources match"}
-                </p>
-                <label className="sort">
-                  <span>Sort by</span>
-                  <select value={filters.sort} onChange={(e) => setSort(e.target.value)}>
-                    <option value="relevance">Best match</option>
-                    <option value="title">Title A to Z</option>
-                    <option value="level">Easiest first</option>
-                    <option value="time">Shortest first</option>
-                  </select>
-                </label>
-              </div>
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
-              <ActiveFilters filters={filters} onRemove={toggleOption} />
-
-              {results.length === 0 ? (
-                <div className="empty">
-                  <p className="empty-title">No resources match these filters</p>
-                  <p>
-                    {filters.q.trim()
-                      ? `Nothing found for “${filters.q.trim()}” with the current filters. Try a shorter search or remove a filter.`
-                      : "Try removing a filter to see more."}
-                  </p>
-                  {hasAnyFilter(filters) && (
-                    <button type="button" className="btn btn-primary" onClick={handleClearAll}>
-                      Clear search and filters
-                    </button>
-                  )}
+        {!loading && !error && (
+          view === "saved" ? (
+            <SavedView
+              resources={resources}
+              onOpen={setSelected}
+              onBrowse={() => setView("browse")}
+              headingRef={savedHeadingRef}
+            />
+          ) : (
+            <div className="layout">
+              <aside className="sidebar">
+                <button
+                  type="button"
+                  className="btn btn-quiet filters-toggle"
+                  aria-expanded={filtersOpen}
+                  aria-controls="filter-panel"
+                  onClick={() => setFiltersOpen((o) => !o)}
+                >
+                  <Icon name="filter" size={16} />
+                  Filters{activeCount > 0 ? ` (${activeCount})` : ""}
+                </button>
+                <div id="filter-panel" className={filtersOpen ? "filter-wrap open" : "filter-wrap"}>
+                  <FilterPanel
+                    filters={filters}
+                    counts={counts}
+                    onToggle={toggleOption}
+                    onClear={clearFacets}
+                    activeCount={activeCount}
+                  />
                 </div>
-              ) : (
-                <>
-                  <ul className="grid">
-                    {shown.map((r) => (
-                      <ResourceCard
-                        key={r.id}
-                        resource={r}
-                        isSaved={Boolean(saved[r.id])}
-                        onToggleSave={toggle}
-                        onOpen={setSelected}
-                      />
-                    ))}
-                  </ul>
-                  {visible < results.length && (
-                    <div className="more">
-                      <button type="button" className="btn btn-quiet" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
-                        Show more ({results.length - visible} left)
+              </aside>
+
+              <section aria-labelledby="results-heading" className="results">
+                <div className="results-bar">
+                  <h2 id="results-heading" tabIndex={-1} ref={browseHeadingRef}>
+                    Resources
+                  </h2>
+                  <p role="status" className="result-count">
+                    {results.length} {results.length === 1 ? "resource matches" : "resources match"}
+                  </p>
+                  <label className="sort">
+                    <span>Sort by</span>
+                    <select value={filters.sort} onChange={(e) => setSort(e.target.value)}>
+                      <option value="relevance">Best match</option>
+                      <option value="title">Title A to Z</option>
+                      <option value="level">Easiest first</option>
+                      <option value="time">Shortest first</option>
+                    </select>
+                  </label>
+                </div>
+
+                <ActiveFilters filters={filters} onRemove={toggleOption} />
+
+                {results.length === 0 ? (
+                  <div className="empty">
+                    <p className="empty-title">No resources match these filters</p>
+                    <p>
+                      {filters.q.trim()
+                        ? `Nothing found for “${filters.q.trim()}” with the current filters. Try a shorter search or remove a filter.`
+                        : "Try removing a filter to see more."}
+                    </p>
+                    {hasAnyFilter(filters) && (
+                      <button type="button" className="btn btn-primary" onClick={handleClearAll}>
+                        Clear search and filters
                       </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </section>
-          </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                                  <ul className="grid">
+                {shown.map((r) => (
+                  <ResourceCard
+                    key={r.id}
+                    resource={r}
+                    isSaved={Boolean(saved[r.id])}
+                    onToggleSave={toggle}
+                    onOpen={setSelected}
+                    isAdmin={isAdmin}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </ul>
+                    {visible < results.length && (
+                      <div className="more">
+                        <button type="button" className="btn btn-quiet" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+                          Show more ({results.length - visible} left)
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {showAdd && (
+                  <AddResourceForm
+                    onClose={() => setShowAdd(false)}
+                    onAdded={(newResource) => {
+                      setResources((prev) => [...prev, newResource]);
+                    }}
+                  />
+                )}
+              </section>
+            </div>
+          )
         )}
       </main>
 

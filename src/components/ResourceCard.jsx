@@ -2,8 +2,16 @@ import { SUBJECT_COLORS, TIME_LABELS } from "../utils/subjects";
 import Icon from "./Icon";
 import LevelMeter from "./LevelMeter";
 
-export default function ResourceCard({ resource, isSaved, onToggleSave, onOpen }) {
+export default function ResourceCard({
+  resource,
+  isSaved,
+  onToggleSave,
+  onOpen,
+  isAdmin = false,
+  onDelete,
+}) {
   const { title, provider, subject, type, cost, time, description, level } = resource;
+
   return (
     <li className="card" style={{ "--spine": SUBJECT_COLORS[subject] }}>
       <p className="card-subject">{subject}</p>
@@ -37,6 +45,20 @@ export default function ResourceCard({ resource, isSaved, onToggleSave, onOpen }
           {isSaved ? "Saved" : "Save"}
           <span className="visually-hidden"> {title}</span>
         </button>
+        {isAdmin && onDelete && (
+          <button
+            type="button"
+            className="btn btn-quiet btn-danger"
+            onClick={() => {
+              if (window.confirm(`Delete "${title}"? This cannot be undone.`)) {
+                onDelete(resource);
+              }
+            }}
+          >
+            Delete
+            <span className="visually-hidden"> {title}</span>
+          </button>
+        )}
       </div>
     </li>
   );
