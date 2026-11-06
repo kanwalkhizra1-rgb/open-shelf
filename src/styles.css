@@ -1066,3 +1066,24 @@ select {
   font-size: 0.78rem;
   color: #64748b;
 }
+/* Styles for screens smaller than 768px (Mobile Devices) */
+@media (max-width: 768px) {
+  
+  /* Change multi-column sections (like your sidebars and resources list) to a vertical column stacked layout */
+  .container, .main-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Make components take up full width instead of fixed pixel widths */
+  .sidebar, .resources-container, .search-box {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  /* Optimize font sizes and line heights so text is highly legible on small displays */
+  body {
+    font-size: 16px;
+  }
+}
